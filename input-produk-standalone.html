@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Input Data Produk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#20302B;
+      --paper:#ECE7D8;
+      --teal:#16504A;
+      --teal-dark:#0E3A35;
+      --mustard:#D9A438;
+      --mustard-dark:#B9852A;
+      --line:#C9C2AE;
+      --card:#FFFDF7;
+      --red-flag:#B24C3A;
+      --green-ok:#3F7D4E;
+      --font-display:'Space Grotesk',sans-serif;
+      --font-body:'IBM Plex Sans',sans-serif;
+      --font-mono:'IBM Plex Mono',monospace;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0; font-family:var(--font-body); color:var(--ink);
+      background:var(--paper);
+      background-image: linear-gradient(var(--line) 1px, transparent 1px);
+      background-size: 100% 28px;
+      padding:24px 16px 50px;
+    }
+    .wrap{max-width:480px;margin:0 auto;}
+    h1{
+      font-family:var(--font-display); font-size:22px; font-weight:700;
+      color:var(--teal-dark); margin:0 0 4px; letter-spacing:-0.01em;
+    }
+    .sub{font-size:12.5px;opacity:.65;margin-bottom:20px;}
+
+    .tabs{display:flex;gap:8px;margin-bottom:16px;}
+    .tab{
+      flex:1; text-align:center; padding:10px; border-radius:6px; cursor:pointer;
+      font-weight:600; font-size:13.5px; border:1.5px solid var(--ink); background:transparent;
+      color:var(--ink);
+    }
+    .tab.active{background:var(--ink);color:var(--card);}
+
+    .card{
+      background:var(--card); border:1px solid var(--line); border-radius:8px;
+      padding:20px; box-shadow:0 1px 0 rgba(0,0,0,0.03);
+    }
+    .panel{display:none;}
+    .panel.active{display:block;}
+
+    .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+    .field label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;opacity:.7;}
+    .field input{
+      font-family:var(--font-body); padding:11px 12px; border:1.5px solid var(--line);
+      border-radius:5px; font-size:15px; background:#fff; color:var(--ink);
+    }
+    .field input:focus{outline:none;border-color:var(--teal);}
+
+    .btn{
+      font-family:var(--font-body); font-weight:600; font-size:14px;
+      padding:12px 18px; border-radius:6px; border:none; cursor:pointer;
+      width:100%; transition:transform .08s ease, background .15s ease;
+    }
+    .btn:active{transform:scale(0.98);}
+    .btn-primary{background:var(--teal);color:#fff;}
+    .btn-primary:hover{background:var(--teal-dark);}
+    .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+    .voicewrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:10px 0 18px;}
+    .mic-btn{
+      width:64px;height:64px;border-radius:50%;border:none;
+      background:var(--teal); color:#fff; cursor:pointer; display:flex;
+      align-items:center;justify-content:center; transition:background .15s ease, transform .1s ease;
+    }
+    .mic-btn:hover{background:var(--teal-dark);}
+    .mic-btn:active{transform:scale(0.95);}
+    .mic-btn.recording{background:var(--red-flag);animation:pulse 1.2s infinite;}
+    .mic-btn:disabled{opacity:.4;cursor:not-allowed;animation:none;}
+    @keyframes pulse{
+      0%{box-shadow:0 0 0 0 rgba(178,76,58,0.5);}
+      70%{box-shadow:0 0 0 14px rgba(178,76,58,0);}
+      100%{box-shadow:0 0 0 0 rgba(178,76,58,0);}
+    }
+    .voice-status{font-size:12.5px;opacity:.75;text-align:center;}
+    .voice-transcript{
+      padding:10px 12px;background:#fff;border:1.5px dashed var(--line);
+      border-radius:6px;font-size:13.5px;font-style:italic;color:#555;margin-bottom:14px;
+      min-height:20px;
+    }
+
+    .toast{
+      margin-top:14px; padding:10px 12px; border-radius:6px; font-size:13px; display:none;
+    }
+    .toast.show{display:block;}
+    .toast.ok{background:#F2F8EF;border:1.5px solid var(--green-ok);color:var(--green-ok);}
+    .toast.err{background:#FBEDEA;border:1.5px solid var(--red-flag);color:var(--red-flag);}
+
+    .hint{font-size:12px;opacity:.65;margin-bottom:14px;}
+
+    .setup-banner{
+      background:#FFF7E6;border:1.5px solid var(--mustard);color:var(--teal-dark);
+      padding:10px 12px;border-radius:6px;font-size:12.5px;margin-bottom:16px;display:none;
+    }
+    .setup-banner.show{display:block;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Input Data Produk</h1>
+    <div class="sub">Data langsung masuk ke sheet "Data Produk", tersusun berurutan</div>
+    <div class="setup-banner" id="setup-banner">
+      ⚠️ Isi dulu <b>WEB_APP_URL</b> di bagian atas &lt;script&gt; dengan URL /exec Apps Script Anda.
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-manual">Tulis Manual</button>
+      <button class="tab" id="tab-voice">Input Suara</button>
+    </div>
+
+    <div class="card">
+      <div class="panel active" id="panel-manual">
+        <div class="field">
+          <label>Nama Produk</label>
+          <input id="m-nama" type="text" placeholder="Contoh: Indomie Goreng 85g" />
+        </div>
+        <div class="field">
+          <label>Harga (Rp)</label>
+          <input id="m-harga" type="number" min="0" placeholder="3500" />
+        </div>
+        <button class="btn btn-primary" id="btn-save-manual">Simpan ke Spreadsheet</button>
+        <div class="toast" id="toast-manual"></div>
+      </div>
+
+      <div class="panel" id="panel-voice">
+        <div class="hint">Tekan mikrofon, lalu ucapkan nama produk dan harganya. Contoh: "Indomie goreng lima ribu" atau "Beras lima kilo harga tujuh puluh ribu"</div>
+        <div class="voicewrap">
+          <button class="mic-btn" id="btn-mic" title="Mulai bicara">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a7 7 0 0 1-14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          </button>
+          <div class="voice-status" id="voice-status">Tekan untuk mulai bicara</div>
+        </div>
+        <div class="voice-transcript" id="voice-transcript" style="display:none;"></div>
+
+        <div id="voice-confirm" style="display:none;">
+          <div class="field">
+            <label>Nama Produk (cek/perbaiki dulu)</label>
+            <input id="v-nama" type="text" />
+          </div>
+          <div class="field">
+            <label>Harga (Rp)</label>
+            <input id="v-harga" type="number" min="0" />
+          </div>
+          <button class="btn btn-primary" id="btn-save-voice">Simpan ke Spreadsheet</button>
+        </div>
+        <div class="toast" id="toast-voice"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================================
+    // WAJIB DIISI: ganti dengan URL /exec deployment Apps Script Anda.
+    // Contoh: 'https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxx/exec'
+    // =====================================================================
+    var WEB_APP_URL = 'GANTI_DENGAN_URL_EXEC_ANDA';
+
+    if(!WEB_APP_URL || WEB_APP_URL.indexOf('GANTI_DENGAN') !== -1){
+      document.getElementById('setup-banner').classList.add('show');
+    }
+
+    // ---- Kirim data ke Apps Script lewat doPost (bukan google.script.run) ----
+    // Content-Type sengaja 'text/plain' agar browser TIDAK mengirim preflight
+    // OPTIONS request, karena Apps Script web app tidak menjawab OPTIONS
+    // sehingga permintaan akan gagal kalau pakai 'application/json'.
+    function kirimKeSheet(nama, harga, sumber, onSuccess, onError){
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ nama: nama, harga: harga, sumber: sumber })
+      })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(data.status === 'ok'){ onSuccess(data.result); }
+        else { onError({ message: data.message || 'Gagal tidak diketahui' }); }
+      })
+      .catch(function(err){ onError({ message: err.message }); });
+    }
+
+    // ---- Tab switching ----
+    var tabManual = document.getElementById('tab-manual');
+    var tabVoice = document.getElementById('tab-voice');
+    var panelManual = document.getElementById('panel-manual');
+    var panelVoice = document.getElementById('panel-voice');
+    tabManual.addEventListener('click', function(){
+      tabManual.classList.add('active'); tabVoice.classList.remove('active');
+      panelManual.classList.add('active'); panelVoice.classList.remove('active');
+    });
+    tabVoice.addEventListener('click', function(){
+      tabVoice.classList.add('active'); tabManual.classList.remove('active');
+      panelVoice.classList.add('active'); panelManual.classList.remove('active');
+    });
+
+    function showToast(el, ok, msg){
+      el.textContent = msg;
+      el.className = 'toast show ' + (ok ? 'ok' : 'err');
+      setTimeout(function(){ el.classList.remove('show'); }, 4000);
+    }
+
+    // ---- Manual save ----
+    var mNama = document.getElementById('m-nama');
+    var mHarga = document.getElementById('m-harga');
+    var btnSaveManual = document.getElementById('btn-save-manual');
+    var toastManual = document.getElementById('toast-manual');
+
+    btnSaveManual.addEventListener('click', function(){
+      var nama = mNama.value.trim();
+      if(!nama){ mNama.focus(); return; }
+      var harga = mHarga.value ? Number(mHarga.value) : '';
+      btnSaveManual.disabled = true;
+      kirimKeSheet(nama, harga, 'manual',
+        function(res){
+          btnSaveManual.disabled = false;
+          showToast(toastManual, true, 'Tersimpan: ' + res.nama + ' (baris no.' + res.nomor + ')');
+          mNama.value = ''; mHarga.value = '';
+          mNama.focus();
+        },
+        function(err){
+          btnSaveManual.disabled = false;
+          showToast(toastManual, false, 'Gagal menyimpan: ' + err.message);
+        }
+      );
+    });
+    mHarga.addEventListener('keydown', function(e){ if(e.key === 'Enter') btnSaveManual.click(); });
+
+    // ---- Voice input ----
+    var btnMic = document.getElementById('btn-mic');
+    var voiceStatus = document.getElementById('voice-status');
+    var voiceTranscript = document.getElementById('voice-transcript');
+    var voiceConfirm = document.getElementById('voice-confirm');
+    var vNama = document.getElementById('v-nama');
+    var vHarga = document.getElementById('v-harga');
+    var btnSaveVoice = document.getElementById('btn-save-voice');
+    var toastVoice = document.getElementById('toast-voice');
+
+    var ONES = { kosong:0, nol:0, satu:1, dua:2, tiga:3, empat:4, lima:5, enam:6, tujuh:7, delapan:8, sembilan:9, sepuluh:10, sebelas:11 };
+    var NUMBER_WORDS = ['kosong','nol','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas','belas','puluh','ratus','ribu','juta'];
+
+    function wordsToNumber(text){
+      var t = ' ' + text.toLowerCase().replace(/[.,]/g,'') + ' ';
+      t = t.replace(/\bseratus\b/g,'satu ratus').replace(/\bseribu\b/g,'satu ribu').replace(/\bsejuta\b/g,'satu juta');
+      var tokens = t.trim().split(/\s+/).filter(Boolean);
+      var total = 0, current = 0;
+      for(var i=0;i<tokens.length;i++){
+        var w = tokens[i];
+        if(w in ONES){ current += ONES[w]; }
+        else if(w === 'belas'){ current += 10; }
+        else if(w === 'puluh'){ current = (current === 0 ? 1 : current) * 10; }
+        else if(w === 'ratus'){ current = (current === 0 ? 1 : current) * 100; }
+        else if(w === 'ribu'){ total += (current === 0 ? 1 : current) * 1000; current = 0; }
+        else if(w === 'juta'){ total += (current === 0 ? 1 : current) * 1000000; current = 0; }
+      }
+      total += current;
+      return total > 0 ? total : null;
+    }
+
+    function extractPrice(text){
+      var digitMatch = text.match(/(\d[\d.,]*)/);
+      if(digitMatch){
+        var num = digitMatch[1].replace(/[.,]/g,'');
+        var parsed = parseInt(num,10);
+        if(!isNaN(parsed)) return parsed;
+      }
+      return wordsToNumber(text);
+    }
+
+    function parseVoice(text){
+      var raw = text.trim().replace(/\brupiah\b/gi,'').trim();
+      var name, priceText;
+      if(/harga/i.test(raw)){
+        var parts = raw.split(/harga/i);
+        name = parts[0].trim();
+        priceText = parts.slice(1).join(' ').trim();
+      } else {
+        var words = raw.split(/\s+/);
+        var idx = -1;
+        for(var i=0;i<words.length;i++){
+          var w = words[i].toLowerCase().replace(/[.,]/g,'');
+          if(/\d/.test(w) || NUMBER_WORDS.indexOf(w) !== -1){ idx = i; break; }
+        }
+        if(idx >= 0){ name = words.slice(0,idx).join(' ').trim(); priceText = words.slice(idx).join(' ').trim(); }
+        else { name = raw; priceText = ''; }
+      }
+      var price = priceText ? extractPrice(priceText) : null;
+      return { name: name || raw, price: price };
+    }
+
+    var SpeechRecImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var recognition = null;
+    if(!SpeechRecImpl){
+      voiceStatus.textContent = 'Input suara tidak didukung di browser ini. Coba pakai Chrome.';
+      btnMic.disabled = true;
+    } else if(!window.isSecureContext){
+      voiceStatus.textContent = 'Halaman ini harus diakses lewat HTTPS agar mikrofon bisa dipakai.';
+      btnMic.disabled = true;
+    } else {
+      recognition = new SpeechRecImpl();
+      recognition.lang = 'id-ID';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      recognition.onstart = function(){
+        btnMic.classList.add('recording');
+        voiceStatus.textContent = 'Mendengarkan... silakan bicara';
+        voiceTranscript.style.display = 'block';
+        voiceTranscript.textContent = '...';
+        voiceConfirm.style.display = 'none';
+      };
+      recognition.onresult = function(e){
+        var transcript = '';
+        for(var i=0;i<e.results.length;i++){ transcript += e.results[i][0].transcript; }
+        voiceTranscript.textContent = transcript;
+        var last = e.results[e.results.length-1];
+        if(last.isFinal){ finalizeVoice(transcript); }
+      };
+      recognition.onerror = function(e){
+        // Pesan yang jelas untuk error yang paling umum: izin ditolak/diblokir.
+        if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+          voiceStatus.textContent = 'Izin mikrofon ditolak/diblokir. Cek ikon gembok/izin di address bar browser, lalu izinkan mikrofon untuk situs ini.';
+        } else {
+          voiceStatus.textContent = 'Gagal merekam (' + e.error + '). Pastikan izin mikrofon aktif.';
+        }
+      };
+      recognition.onend = function(){
+        btnMic.classList.remove('recording');
+        if(voiceStatus.textContent.indexOf('Mendengarkan') !== -1){ voiceStatus.textContent = 'Tekan untuk mulai bicara'; }
+      };
+      btnMic.addEventListener('click', function(){
+        try{
+          recognition.start();
+        } catch(e){
+          // PENTING: jangan ditelan diam-diam — tampilkan ke user.
+          voiceStatus.textContent = 'Tidak bisa mulai merekam: ' + e.message;
+        }
+      });
+    }
+
+    function finalizeVoice(transcript){
+      voiceStatus.textContent = 'Selesai. Cek hasilnya sebelum simpan.';
+      var parsed = parseVoice(transcript);
+      vNama.value = parsed.name;
+      vHarga.value = parsed.price !== null ? parsed.price : '';
+      voiceConfirm.style.display = 'block';
+    }
+
+    btnSaveVoice.addEventListener('click', function(){
+      var nama = vNama.value.trim();
+      if(!nama){ vNama.focus(); return; }
+      var harga = vHarga.value ? Number(vHarga.value) : '';
+      btnSaveVoice.disabled = true;
+      kirimKeSheet(nama, harga, 'suara',
+        function(res){
+          btnSaveVoice.disabled = false;
+          showToast(toastVoice, true, 'Tersimpan: ' + res.nama + ' (baris no.' + res.nomor + ')');
+          voiceConfirm.style.display = 'none';
+          voiceTranscript.style.display = 'none';
+          voiceStatus.textContent = 'Tekan untuk mulai bicara';
+        },
+        function(err){
+          btnSaveVoice.disabled = false;
+          showToast(toastVoice, false, 'Gagal menyimpan: ' + err.message);
+        }
+      );
+    });
+  </script>
+</body>
+</html>
